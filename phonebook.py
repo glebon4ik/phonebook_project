@@ -3,117 +3,104 @@ import tkinter as tk
 from tkinter import messagebox
 from tkinter import ttk
 
-# Функция для загрузки телефонного справочника из файла
+# Функция для загрузки данных из файла
 def load_phonebook(filename):
     if not os.path.exists(filename):
         return []
     with open(filename, 'r', encoding='utf-8') as file:
-        phonebook = [line.strip().split(',') for line in file]
-    return phonebook
+        return [line.strip().split(',') for line in file]
 
-# Функция для сохранения телефонного справочника в файл
+# Функция для сохранения данных в файл
 def save_phonebook(phonebook, filename):
     with open(filename, 'w', encoding='utf-8') as file:
-        for entry in phonebook:
-            file.write(','.join(entry) + '\n')
+        file.writelines(','.join(entry) + '\n' for entry in phonebook)
 
-# Функция для отображения телефонного справочника
+# Функция для отображения записей
 def display_phonebook(phonebook):
-    result = ""
-    for entry in phonebook:
-        result += f'Фамилия: {entry[0]}, Имя: {entry[1]}, Отчество: {entry[2]}, Телефон: {entry[3]}\n'
-    return result
+    return '\n'.join(f'Фамилия: {entry[0]}, Имя: {entry[1]}, Отчество: {entry[2]}, Телефон: {entry[3]}' for entry in phonebook)
 
-# Функция для поиска записей в телефонном справочнике
+# Функция для поиска записей по запросу
 def search_phonebook(phonebook, query):
-    results = [entry for entry in phonebook if query in entry]
-    return results
+    return [entry for entry in phonebook if query in entry]
 
-# Функция для добавления новой записи в телефонный справочник
-def add_entry(phonebook, surname, name, patronymic, phone):
-    phonebook.append([surname, name, patronymic, phone])
+# Функция для добавления новой записи
+def add_entry(phonebook, entry):
+    phonebook.append(entry)
 
-# Функция для обновления существующей записи в телефонном справочнике
+# Функция для обновления записи
 def update_entry(phonebook, query, new_entry):
     for i, entry in enumerate(phonebook):
         if query in entry:
             phonebook[i] = new_entry
             break
 
-# Функция для удаления записи из телефонного справочника
+# Функция для удаления записи
 def delete_entry(phonebook, query):
     phonebook[:] = [entry for entry in phonebook if query not in entry]
+
+# Функция для обработки событий интерфейса
+def handle_event(event_type, phonebook, phonebook_file, entries, query_entry):
+    if event_type == 'show':
+        result = display_phonebook(phonebook)
+        messagebox.showinfo("Phonebook Entries", result)
+    elif event_type == 'add':
+        new_entry = [entry.get() for entry in entries]
+        add_entry(phonebook, new_entry)
+        save_phonebook(phonebook, phonebook_file)
+        messagebox.showinfo("Info", "Entry added successfully")
+    elif event_type == 'search':
+        query = query_entry.get()
+        results = search_phonebook(phonebook, query)
+        result = display_phonebook(results)
+        messagebox.showinfo("Search Results", result)
+    elif event_type == 'update':
+        query = query_entry.get()
+        new_entry = [entry.get() for entry in entries]
+        update_entry(phonebook, query, new_entry)
+        save_phonebook(phonebook, phonebook_file)
+        messagebox.showinfo("Info", "Entry updated successfully")
+    elif event_type == 'delete':
+        query = query_entry.get()
+        delete_entry(phonebook, query)
+        save_phonebook(phonebook, phonebook_file)
+        messagebox.showinfo("Info", "Entry deleted successfully")
 
 # Главная функция программы
 def main():
     phonebook_file = 'phonebook.txt'
     phonebook = load_phonebook(phonebook_file)
 
-    # Следующий код был создан с использованием ChatGPT для создания графического интерфейса с помощью tkinter и ttk
-    def on_show():
-        result = display_phonebook(phonebook)
-        messagebox.showinfo("Phonebook Entries", result)
-
-    def on_add():
-        add_entry(phonebook, entry_surname.get(), entry_name.get(), entry_patronymic.get(), entry_phone.get())
-        save_phonebook(phonebook, phonebook_file)
-        messagebox.showinfo("Info", "Entry added successfully")
-
-    def on_search():
-        results = search_phonebook(phonebook, entry_search.get())
-        result = display_phonebook(results)
-        messagebox.showinfo("Search Results", result)
-
-    def on_update():
-        query = entry_search.get()
-        update_entry(phonebook, query, [entry_surname.get(), entry_name.get(), entry_patronymic.get(), entry_phone.get()])
-        save_phonebook(phonebook, phonebook_file)
-        messagebox.showinfo("Info", "Entry updated successfully")
-
-    def on_delete():
-        query = entry_search.get()
-        delete_entry(phonebook, query)
-        save_phonebook(phonebook, phonebook_file)
-        messagebox.showinfo("Info", "Entry deleted successfully")
-
-    # Создание главного окна приложения
     root = tk.Tk()
     root.title("Phonebook")
     root.geometry("400x300")
 
-    # Настройка стиля интерфейса
     style = ttk.Style()
     style.configure("TButton", font=("Arial", 10), padding=5)
     style.configure("TLabel", font=("Arial", 10))
     style.configure("TEntry", font=("Arial", 10))
 
-    # Создание меток и полей ввода
-    ttk.Label(root, text="Фамилия").grid(row=0, column=0, padx=10, pady=5)
-    ttk.Label(root, text="Имя").grid(row=1, column=0, padx=10, pady=5)
-    ttk.Label(root, text="Отчество").grid(row=2, column=0, padx=10, pady=5)
-    ttk.Label(root, text="Телефон").grid(row=3, column=0, padx=10, pady=5)
-    ttk.Label(root, text="Поиск").grid(row=4, column=0, padx=10, pady=5)
+    labels_text = ["Фамилия", "Имя", "Отчество", "Телефон", "Поиск"]
+    entries = [ttk.Entry(root) for _ in range(4)]
+    query_entry = ttk.Entry(root)
 
-    entry_surname = ttk.Entry(root)
-    entry_name = ttk.Entry(root)
-    entry_patronymic = ttk.Entry(root)
-    entry_phone = ttk.Entry(root)
-    entry_search = ttk.Entry(root)
+    for i, text in enumerate(labels_text[:4]):
+        ttk.Label(root, text=text).grid(row=i, column=0, padx=10, pady=5)
+        entries[i].grid(row=i, column=1, padx=10, pady=5)
 
-    entry_surname.grid(row=0, column=1, padx=10, pady=5)
-    entry_name.grid(row=1, column=1, padx=10, pady=5)
-    entry_patronymic.grid(row=2, column=1, padx=10, pady=5)
-    entry_phone.grid(row=3, column=1, padx=10, pady=5)
-    entry_search.grid(row=4, column=1, padx=10, pady=5)
+    ttk.Label(root, text=labels_text[4]).grid(row=4, column=0, padx=10, pady=5)
+    query_entry.grid(row=4, column=1, padx=10, pady=5)
 
-    # Создание кнопок для управления телефонным справочником
-    ttk.Button(root, text='Показать все', command=on_show).grid(row=5, column=0, padx=10, pady=5)
-    ttk.Button(root, text='Добавить', command=on_add).grid(row=5, column=1, padx=10, pady=5)
-    ttk.Button(root, text='Найти', command=on_search).grid(row=6, column=0, padx=10, pady=5)
-    ttk.Button(root, text='Изменить', command=on_update).grid(row=6, column=1, padx=10, pady=5)
-    ttk.Button(root, text='Удалить', command=on_delete).grid(row=7, column=0, padx=10, pady=5)
+    buttons = [
+        ("Показать все", 'show'),
+        ("Добавить", 'add'),
+        ("Найти", 'search'),
+        ("Изменить", 'update'),
+        ("Удалить", 'delete')
+    ]
 
-    # Запуск главного цикла приложения
+    for i, (text, event_type) in enumerate(buttons):
+        ttk.Button(root, text=text, command=lambda e=event_type: handle_event(e, phonebook, phonebook_file, entries, query_entry)).grid(row=5 + i // 2, column=i % 2, padx=10, pady=5)
+
     root.mainloop()
 
 if __name__ == "__main__":
